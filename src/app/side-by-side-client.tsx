@@ -43,24 +43,31 @@ async function capturePageDataUrl(
   if (typeof window === "undefined") {
     throw new Error("Screenshot is only available in the browser");
   }
-  const pdfjsMod = await import("pdfjs-dist");
-  const v = pdfjsMod.version || pdfjs.version;
-  pdfjsMod.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${v}/build/pdf.worker.min.mjs`;
-  const pdf = await pdfjsMod.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
-  const page = await pdf.getPage(pageNumber);
-  const viewport = page.getViewport({ scale });
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Could not get canvas context");
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
-  const renderContext = {
-    canvasContext: ctx,
-    viewport,
-    canvas,
-  };
-  await page.render(renderContext).promise;
-  return canvas.toDataURL("image/png");
+  // Use the same pdfjs instance as react-pdf. Do not touch GlobalWorkerOptions here —
+  // a separate dynamic import can share that singleton; reassigning workerSrc resets
+  // the worker and tears down the on-screen Document (looks like a full refresh).
+  const data = new Uint8Array(arrayBuffer.slice(0));
+  const loadingTask = pdfjs.getDocument({ data });
+  const pdf = await loadingTask.promise;
+  try {
+    const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({ scale });
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Could not get canvas context");
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page
+      .render({
+        canvasContext: ctx,
+        viewport,
+        canvas,
+      })
+      .promise;
+    return canvas.toDataURL("image/png");
+  } finally {
+    await pdf.destroy().catch(() => {});
+  }
 }
 
 

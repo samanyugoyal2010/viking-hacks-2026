@@ -4,6 +4,10 @@ export const OPENROUTER_CHAT_URL =
 export const DEFAULT_OPENROUTER_TEXT_MODEL =
   "nvidia/nemotron-nano-12b-v2-vl:free";
 
+/** Default image generation model on OpenRouter (override via OPENROUTER_IMAGE_MODEL). */
+export const DEFAULT_OPENROUTER_IMAGE_MODEL =
+  "sourceful/riverflow-v2-pro";
+
 function normalizeApiKey(raw: string): string {
   let k = raw.trim();
   if (
@@ -19,7 +23,7 @@ export function getOpenRouterApiKey(): string {
   const key = normalizeApiKey(process.env.OPENROUTER_API_KEY ?? "");
   if (!key) {
     throw new Error(
-      "OPENROUTER_API_KEY is not set. Add it to side-by-side/.env.local (no quotes)."
+      "OPENROUTER_API_KEY is not set. Add it to .env or .env.local (no quotes)."
     );
   }
   return key;
@@ -63,7 +67,7 @@ function formatOpenRouterHttpError(
   }
 
   const hint401 =
-    "OpenRouter rejected the API key. See https://openrouter.ai/keys and set OPENROUTER_API_KEY in side-by-side/.env.local.";
+    "OpenRouter rejected the API key. See https://openrouter.ai/keys and set OPENROUTER_API_KEY in .env or .env.local.";
 
   if (status === 401) {
     return `${message}. ${hint401}`;
@@ -79,6 +83,91 @@ export function getTextModel(): string {
   return (
     process.env.OPENROUTER_TEXT_MODEL?.trim() || DEFAULT_OPENROUTER_TEXT_MODEL
   );
+}
+
+export function getImageModel(): string {
+  return (
+    process.env.OPENROUTER_IMAGE_MODEL?.trim() || DEFAULT_OPENROUTER_IMAGE_MODEL
+  );
+}
+
+const ALLOWED_IMAGE_ASPECT_RATIOS = new Set([
+  "1:1",
+  "2:3",
+  "3:2",
+  "3:4",
+  "4:3",
+  "4:5",
+  "5:4",
+  "9:16",
+  "16:9",
+  "21:9",
+]);
+
+function parseFirstImageDataUrl(message: Record<string, unknown>): string | null {
+  const images = message.images;
+  if (!Array.isArray(images) || images.length === 0) return null;
+  for (const img of images) {
+    if (!img || typeof img !== "object") continue;
+    const o = img as Record<string, unknown>;
+    const iu = o.image_url as { url?: string } | undefined;
+    if (iu?.url?.startsWith("data:image")) return iu.url;
+    const nested = o.imageUrl as { url?: string } | undefined;
+    if (nested?.url?.startsWith("data:image")) return nested.url;
+  }
+  return null;
+}
+
+/**
+ * Generate one image via OpenRouter (chat completions + modalities).
+ */
+export async function openRouterGenerateImage(params: {
+  prompt: string;
+  aspectRatio?: string;
+}): Promise<string> {
+  const aspect = ALLOWED_IMAGE_ASPECT_RATIOS.has(params.aspectRatio ?? "")
+    ? params.aspectRatio
+    : "16:9";
+
+  const model = getImageModel();
+  const m = model.toLowerCase();
+  // Flux / Sourceful Riverflow: image-only output; Gemini-style: text+image.
+  const modalities: string[] =
+    m.includes("flux") || m.includes("sourceful") || m.includes("riverflow")
+      ? ["image"]
+      : ["image", "text"];
+
+  const body: Record<string, unknown> = {
+    model,
+    messages: [
+      {
+        role: "user",
+        content:
+          params.prompt.trim() ||
+          "Create a clean educational diagram with labeled components.",
+      },
+    ],
+    modalities,
+    image_config: {
+      aspect_ratio: aspect,
+    },
+  };
+
+  const data = await openRouterComplete(body);
+  const choices = data.choices as
+    | Array<{ message?: Record<string, unknown> }>
+    | undefined;
+  const message = choices?.[0]?.message;
+  if (!message) {
+    throw new Error("OpenRouter returned no message for image generation");
+  }
+  const url = parseFirstImageDataUrl(message);
+  if (!url) {
+    throw new Error(
+      "Model returned no image. Set OPENROUTER_IMAGE_MODEL to another image-capable model (see OpenRouter models filter: output image)."
+    );
+  }
+  return url;
 }
 
 export function assistantTextFromResponse(
