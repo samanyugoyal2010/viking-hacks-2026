@@ -1,13 +1,8 @@
 export const OPENROUTER_CHAT_URL =
   "https://openrouter.ai/api/v1/chat/completions";
 
-/** Text pipeline default (OpenRouter free tier). */
 export const DEFAULT_OPENROUTER_TEXT_MODEL =
   "nvidia/nemotron-nano-12b-v2-vl:free";
-
-/** Image generation default. */
-export const DEFAULT_OPENROUTER_IMAGE_MODEL =
-  "black-forest-labs/flux.2-pro";
 
 function normalizeApiKey(raw: string): string {
   let k = raw.trim();
@@ -24,7 +19,7 @@ export function getOpenRouterApiKey(): string {
   const key = normalizeApiKey(process.env.OPENROUTER_API_KEY ?? "");
   if (!key) {
     throw new Error(
-      "OPENROUTER_API_KEY is not set. Add it to .env.local — Gemini is no longer used."
+      "OPENROUTER_API_KEY is not set. Add it to side-by-side/.env.local (no quotes)."
     );
   }
   return key;
@@ -35,14 +30,13 @@ export function openRouterHeaders(): Record<string, string> {
     Authorization: `Bearer ${getOpenRouterApiKey()}`,
     "Content-Type": "application/json",
   };
-  // OpenRouter recommends these; some setups misbehave if Referer is missing.
   const referer =
     process.env.OPENROUTER_HTTP_REFERER?.trim() ||
-    "http://127.0.0.1:3000";
+    "http://127.0.0.1:3001";
   headers["HTTP-Referer"] = referer;
 
   const title =
-    process.env.OPENROUTER_APP_TITLE?.trim() || "PaperBanana Next.js";
+    process.env.OPENROUTER_APP_TITLE?.trim() || "Side-by-side PDF Chat";
   headers["X-Title"] = title;
   headers["X-OpenRouter-Title"] = title;
 
@@ -58,14 +52,18 @@ function formatOpenRouterHttpError(
   let message: string;
   if (typeof errUnknown === "string") {
     message = errUnknown;
-  } else if (errUnknown && typeof errUnknown === "object" && "message" in errUnknown) {
+  } else if (
+    errUnknown &&
+    typeof errUnknown === "object" &&
+    "message" in errUnknown
+  ) {
     message = String((errUnknown as { message: string }).message);
   } else {
     message = raw.slice(0, 400);
   }
 
   const hint401 =
-    "OpenRouter rejected the API key. Open https://openrouter.ai/keys , create a fresh key, set OPENROUTER_API_KEY in nextjs/.env.local (no quotes), restart `npm run dev`.";
+    "OpenRouter rejected the API key. See https://openrouter.ai/keys and set OPENROUTER_API_KEY in side-by-side/.env.local.";
 
   if (status === 401) {
     return `${message}. ${hint401}`;
@@ -80,12 +78,6 @@ function formatOpenRouterHttpError(
 export function getTextModel(): string {
   return (
     process.env.OPENROUTER_TEXT_MODEL?.trim() || DEFAULT_OPENROUTER_TEXT_MODEL
-  );
-}
-
-export function getImageModel(): string {
-  return (
-    process.env.OPENROUTER_IMAGE_MODEL?.trim() || DEFAULT_OPENROUTER_IMAGE_MODEL
   );
 }
 
@@ -143,7 +135,6 @@ export async function openRouterChatText(params: {
   messages: Message[];
   temperature?: number;
   max_tokens?: number;
-  plugins?: unknown[];
 }): Promise<string> {
   const body: Record<string, unknown> = {
     model: params.model ?? getTextModel(),
@@ -151,12 +142,6 @@ export async function openRouterChatText(params: {
     temperature: params.temperature ?? 0.7,
   };
   if (params.max_tokens != null) body.max_tokens = params.max_tokens;
-  if (params.plugins) body.plugins = params.plugins;
   const data = await openRouterComplete(body);
   return assistantTextFromResponse(data);
 }
-
-/** Default PDF parsing on OpenRouter (free Cloudflare markdown path). */
-export const OPENROUTER_PDF_PLUGINS = [
-  { id: "file-parser", pdf: { engine: "cloudflare-ai" as const } },
-];

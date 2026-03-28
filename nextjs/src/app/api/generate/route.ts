@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { runFullPipeline } from "@/lib/gemini";
 
-export const maxDuration = 300;
+/** Host maximum for long-running pipeline (PDF + text + image gen + critic). Vercel Pro caps at 800s. */
+export const maxDuration = 800;
 
 export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();

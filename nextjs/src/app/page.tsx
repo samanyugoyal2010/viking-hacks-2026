@@ -198,18 +198,30 @@ export default function Home() {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="border-b border-zinc-200 bg-white">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center text-lg">
-            🍌
+        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center text-lg shrink-0">
+              🍌
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
+                PaperBanana
+              </h1>
+              <p className="text-xs text-zinc-500">
+                Research paper to publication-quality diagram
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
-              PaperBanana
-            </h1>
-            <p className="text-xs text-zinc-500">
-              Research paper to publication-quality diagram
-            </p>
-          </div>
+          <a
+            href={
+              process.env.NEXT_PUBLIC_SIDE_BY_SIDE_URL ?? "http://127.0.0.1:3001"
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-amber-700 hover:text-amber-900 shrink-0"
+          >
+            Side-by-side PDF chat →
+          </a>
         </div>
       </header>
 
