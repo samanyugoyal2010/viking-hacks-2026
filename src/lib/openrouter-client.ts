@@ -29,9 +29,39 @@ export function getOpenRouterApiKey(): string {
   return key;
 }
 
-export function openRouterHeaders(): Record<string, string> {
+/** Text planner on /image: main key first, else image-only key. */
+export function getOpenRouterPlannerApiKey(): string {
+  const main = normalizeApiKey(process.env.OPENROUTER_API_KEY ?? "");
+  const image = normalizeApiKey(process.env.OPENROUTER_IMAGE_API_KEY ?? "");
+  if (main) return main;
+  if (image) return image;
+  throw new Error(
+    "Set OPENROUTER_API_KEY and/or OPENROUTER_IMAGE_API_KEY for project image generation."
+  );
+}
+
+/** Image generation on /image: dedicated key if set, else main key. */
+export function getOpenRouterImageApiKey(): string {
+  const image = normalizeApiKey(process.env.OPENROUTER_IMAGE_API_KEY ?? "");
+  const main = normalizeApiKey(process.env.OPENROUTER_API_KEY ?? "");
+  if (image) return image;
+  if (main) return main;
+  throw new Error(
+    "Set OPENROUTER_IMAGE_API_KEY and/or OPENROUTER_API_KEY for image generation."
+  );
+}
+
+export function hasOpenRouterKeysForImage(): boolean {
+  return (
+    normalizeApiKey(process.env.OPENROUTER_API_KEY ?? "").length > 0 ||
+    normalizeApiKey(process.env.OPENROUTER_IMAGE_API_KEY ?? "").length > 0
+  );
+}
+
+export function openRouterHeaders(apiKeyOverride?: string): Record<string, string> {
+  const key = apiKeyOverride ?? getOpenRouterApiKey();
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${getOpenRouterApiKey()}`,
+    Authorization: `Bearer ${key}`,
     "Content-Type": "application/json",
   };
   const referer =
@@ -119,7 +149,48 @@ function parseFirstImageDataUrl(message: Record<string, unknown>): string | null
 }
 
 /**
+ * True when /image should show the stock placeholder instead of failing:
+ * rate limits, quotas, or billing / out-of-credits style errors from OpenRouter.
+ */
+export function isOpenRouterRateOrQuotaError(
+  message: string,
+  httpStatus?: number
+): boolean {
+  if (httpStatus === 429 || httpStatus === 402) return true;
+  const m = message.toLowerCase();
+  if (
+    m.includes("429") ||
+    m.includes("rate limit") ||
+    m.includes("too many requests") ||
+    m.includes("quota") ||
+    m.includes("resource exhausted")
+  ) {
+    return true;
+  }
+  if (
+    m.includes("402") ||
+    m.includes("payment required") ||
+    m.includes("insufficient credits") ||
+    m.includes("out of credits") ||
+    m.includes("no credits") ||
+    m.includes("credit balance") ||
+    m.includes("not enough credits") ||
+    m.includes("zero credits") ||
+    (m.includes("credit") && m.includes("exhaust")) ||
+    m.includes("billing") ||
+    m.includes("add credits") ||
+    m.includes("top up") ||
+    m.includes("spend limit") ||
+    (m.includes("budget") && m.includes("exceeded"))
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
  * Generate one image via OpenRouter (chat completions + modalities).
+ * Uses OPENROUTER_IMAGE_API_KEY when set, otherwise OPENROUTER_API_KEY.
  */
 export async function openRouterGenerateImage(params: {
   prompt: string;
@@ -153,7 +224,7 @@ export async function openRouterGenerateImage(params: {
     },
   };
 
-  const data = await openRouterComplete(body);
+  const data = await openRouterComplete(body, getOpenRouterImageApiKey());
   const choices = data.choices as
     | Array<{ message?: Record<string, unknown> }>
     | undefined;
@@ -192,11 +263,12 @@ export function assistantTextFromResponse(
 }
 
 export async function openRouterComplete(
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
+  apiKeyOverride?: string
 ): Promise<Record<string, unknown>> {
   const res = await fetch(OPENROUTER_CHAT_URL, {
     method: "POST",
-    headers: openRouterHeaders(),
+    headers: openRouterHeaders(apiKeyOverride),
     body: JSON.stringify(body),
   });
   const raw = await res.text();
@@ -209,7 +281,8 @@ export async function openRouterComplete(
     );
   }
   if (!res.ok) {
-    throw new Error(formatOpenRouterHttpError(data, res.status, raw));
+    const msg = formatOpenRouterHttpError(data, res.status, raw);
+    throw new Error(`${msg} (HTTP ${res.status})`);
   }
   return data;
 }
@@ -224,6 +297,8 @@ export async function openRouterChatText(params: {
   messages: Message[];
   temperature?: number;
   max_tokens?: number;
+  /** When set (e.g. planner key on /image), used instead of OPENROUTER_API_KEY. */
+  apiKey?: string;
 }): Promise<string> {
   const body: Record<string, unknown> = {
     model: params.model ?? getTextModel(),
@@ -231,6 +306,7 @@ export async function openRouterChatText(params: {
     temperature: params.temperature ?? 0.7,
   };
   if (params.max_tokens != null) body.max_tokens = params.max_tokens;
-  const data = await openRouterComplete(body);
+  const key = params.apiKey ?? getOpenRouterApiKey();
+  const data = await openRouterComplete(body, key);
   return assistantTextFromResponse(data);
 }

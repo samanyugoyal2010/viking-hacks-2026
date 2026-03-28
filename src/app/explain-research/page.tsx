@@ -9,7 +9,6 @@ import {
   Send,
   Trash2,
   ChevronDown,
-  AlertTriangle,
 } from "lucide-react";
 import { unzipToTextCorpus } from "@/lib/zip-extract";
 import {
@@ -32,18 +31,8 @@ export default function ExplainResearchPage() {
   const [extractError, setExtractError] = useState<string | null>(null);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
-  const [activeModel, setActiveModel] = useState<string | null>(null);
   const [idbReady, setIdbReady] = useState(false);
   const [restoredBanner, setRestoredBanner] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/side-by-side/model")
-      .then((r) => r.json())
-      .then((d: { model?: string }) => {
-        if (typeof d.model === "string") setActiveModel(d.model);
-      })
-      .catch(() => setActiveModel(null));
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,7 +192,7 @@ export default function ExplainResearchPage() {
                 Explain Research
               </h1>
               <p className="text-xs text-zinc-500">
-                ZIP unpacks in your browser; context stays local until you chat
+                Upload a ZIP export and ask questions about your project
               </p>
             </div>
           </div>
@@ -219,18 +208,6 @@ export default function ExplainResearchPage() {
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 max-w-[1600px] mx-auto w-full">
         <div className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-zinc-200 min-h-[42vh] lg:min-h-0 overflow-y-auto">
           <div className="p-4 space-y-4">
-            <div
-              className="rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-950 flex gap-2"
-              role="status"
-            >
-              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-700 mt-0.5" />
-              <p>
-                Do not upload ZIPs that contain secrets (API keys, passwords).
-                Unpacking runs in your browser; chat sends text to the model
-                provider.
-              </p>
-            </div>
-
             {restoredBanner && meta && (
               <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-950">
                 Restored saved project: <strong>{meta.zipName}</strong>
@@ -258,7 +235,7 @@ export default function ExplainResearchPage() {
                     Drop a ZIP export here (Notion, Drive, repo)
                   </p>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Max {MAX_ZIP_BYTES / (1024 * 1024)} MB — processed locally
+                    Max {MAX_ZIP_BYTES / (1024 * 1024)} MB
                   </p>
                 </>
               )}
@@ -271,16 +248,7 @@ export default function ExplainResearchPage() {
             {meta && (
               <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-700 space-y-1">
                 <p>
-                  <span className="font-medium">Archive:</span> {meta.zipName}
-                </p>
-                <p>
-                  <span className="font-medium">Text files in corpus:</span>{" "}
-                  {meta.textFilesIncluded} (from {meta.totalZipEntries} paths)
-                </p>
-                <p>
-                  <span className="font-medium">Corpus size:</span>{" "}
-                  {meta.corpusCharCount.toLocaleString()} characters
-                  {meta.corpusTruncated ? " (truncated)" : ""}
+                  <span className="font-medium">Loaded:</span> {meta.zipName}
                 </p>
                 <button
                   type="button"
@@ -294,57 +262,10 @@ export default function ExplainResearchPage() {
             )}
 
             {meta && meta.textFilesIncluded === 0 && meta.totalZipEntries > 0 && (
-              <div
-                className="rounded-xl border border-amber-200 bg-amber-50/90 px-3 py-3 text-sm text-amber-950 space-y-2"
-                role="status"
-              >
-                <p className="font-medium text-amber-950">
-                  No readable text was extracted from this archive.
-                </p>
-                {(meta.nestedZipsExpanded ?? 0) > 0 && (
-                  <p className="text-xs text-amber-900/90">
-                    Nested ZIPs unpacked: {meta.nestedZipsExpanded}. If you still
-                    see no text, inner files may be an unsupported type.
-                  </p>
-                )}
-                <ul className="text-xs text-amber-900/90 list-disc pl-4 space-y-0.5">
-                  <li>
-                    Skipped (path filters):{" "}
-                    {meta.filesSkippedByPath ?? "—"}
-                  </li>
-                  <li>
-                    Skipped (unsupported extension):{" "}
-                    {meta.filesSkippedExtension ?? "—"}
-                  </li>
-                  <li>
-                    Skipped (file too large):{" "}
-                    {meta.filesSkippedSize ?? "—"}
-                  </li>
-                  <li>
-                    Skipped (binary / empty decode):{" "}
-                    {meta.filesSkippedBinary ?? "—"}
-                  </li>
-                  <li>
-                    Office parse failed (.docx/.xlsx):{" "}
-                    {meta.filesSkippedOfficeParse ?? "—"}
-                  </li>
-                </ul>
-                {(meta.pdfFilesInArchive ?? 0) > 0 && (
-                  <p className="text-xs text-amber-900 pt-1 border-t border-amber-200/80">
-                    This archive includes {meta.pdfFilesInArchive} PDF
-                    {meta.pdfFilesInArchive === 1 ? "" : "s"}. PDF text is not
-                    extracted from ZIPs here. Export pages as Markdown or Word, or
-                    open a single PDF in{" "}
-                    <Link
-                      href="/side-by-side"
-                      className="font-medium text-amber-950 underline underline-offset-2"
-                    >
-                      Side-by-side PDF chat
-                    </Link>
-                    .
-                  </p>
-                )}
-              </div>
+              <p className="text-sm text-zinc-600">
+                No readable text was found in this archive. Try another export
+                or different file types.
+              </p>
             )}
 
             {corpus.length > 0 && (
@@ -359,13 +280,6 @@ export default function ExplainResearchPage() {
                     value={corpus.slice(0, 24_000) + (corpus.length > 24_000 ? "\n\n… (preview trimmed)" : "")}
                     className="w-full h-48 text-xs font-mono bg-zinc-50 rounded-lg p-2 border border-zinc-100 resize-y"
                   />
-                  {meta && meta.includedPathsSample.length > 0 && (
-                    <p className="text-xs text-zinc-500 mt-2">
-                      Sample paths:{" "}
-                      {meta.includedPathsSample.slice(0, 8).join(", ")}
-                      {meta.includedPathsSample.length > 8 ? "…" : ""}
-                    </p>
-                  )}
                 </div>
               </details>
             )}
@@ -375,14 +289,6 @@ export default function ExplainResearchPage() {
         <div className="w-full lg:w-[min(440px,100%)] flex flex-col bg-white min-h-[45vh] lg:min-h-0 lg:max-h-[calc(100vh-57px)]">
           <div className="px-4 py-2 border-b border-zinc-100">
             <div className="text-sm font-medium text-zinc-800">Assistant</div>
-            {activeModel && (
-              <div
-                className="text-[11px] text-zinc-500 mt-0.5 font-mono truncate"
-                title={activeModel}
-              >
-                Model: {activeModel}
-              </div>
-            )}
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {history.length === 0 && (

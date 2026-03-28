@@ -86,8 +86,6 @@ export default function SideBySideClient() {
   const [pendingImages, setPendingImages] = useState<string[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
-  const [activeModel, setActiveModel] = useState<string | null>(null);
-
   const [selectionPopup, setSelectionPopup] = useState<SelectionPopup | null>(
     null
   );
@@ -111,15 +109,6 @@ export default function SideBySideClient() {
     });
     return () => URL.revokeObjectURL(url);
   }, [file]);
-
-  useEffect(() => {
-    fetch("/api/side-by-side/model")
-      .then((r) => r.json())
-      .then((d: { model?: string }) => {
-        if (typeof d.model === "string") setActiveModel(d.model);
-      })
-      .catch(() => setActiveModel(null));
-  }, []);
 
   useEffect(() => {
     const el = shellRef.current;
@@ -485,14 +474,6 @@ export default function SideBySideClient() {
         <div className="w-full lg:w-[min(440px,100%)] flex flex-col bg-white min-h-[40vh] lg:min-h-0 lg:max-h-[calc(100vh-57px)]">
           <div className="px-4 py-2 border-b border-zinc-100">
             <div className="text-sm font-medium text-zinc-800">Assistant</div>
-            {activeModel && (
-              <div
-                className="text-[11px] text-zinc-500 mt-0.5 font-mono truncate"
-                title={activeModel}
-              >
-                Model: {activeModel}
-              </div>
-            )}
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {history.length === 0 && (

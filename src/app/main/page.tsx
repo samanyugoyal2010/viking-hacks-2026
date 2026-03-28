@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { FileText, FolderArchive, Image as ImageIcon, MessageCircle } from "lucide-react";
+import {
+  FileText,
+  FolderArchive,
+  Image as ImageIcon,
+  MessageCircle,
+  Clapperboard,
+} from "lucide-react";
 
 export default function MainHubPage() {
   return (
@@ -21,7 +27,7 @@ export default function MainHubPage() {
       </header>
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-12">
-        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-4">
           <Link
             href="/side-by-side"
             className="group rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm hover:border-sky-300 hover:shadow-md transition-all"
@@ -52,8 +58,8 @@ export default function MainHubPage() {
               Explain Research
             </h2>
             <p className="text-sm text-zinc-600 leading-relaxed">
-              Upload a ZIP (Notion export, Drive folder, source repo). We unpack
-              it in your browser and help you understand the contents.
+              Upload a ZIP export and explore what&apos;s inside with a guided
+              assistant.
             </p>
             <span className="inline-block mt-4 text-sm font-medium text-violet-700 group-hover:underline">
               Open →
@@ -75,6 +81,25 @@ export default function MainHubPage() {
               image that summarizes the whole project.
             </p>
             <span className="inline-block mt-4 text-sm font-medium text-emerald-700 group-hover:underline">
+              Open →
+            </span>
+          </Link>
+
+          <Link
+            href="/video"
+            className="group rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm hover:border-rose-300 hover:shadow-md transition-all"
+          >
+            <div className="h-12 w-12 rounded-xl bg-rose-100 flex items-center justify-center text-rose-700 mb-4 group-hover:bg-rose-200/80">
+              <Clapperboard className="h-6 w-6" />
+            </div>
+            <h2 className="text-lg font-semibold text-zinc-900 mb-2">
+              Video generation
+            </h2>
+            <p className="text-sm text-zinc-600 leading-relaxed">
+              Turn research notes into a short explainer-style video preview
+              using our template clip.
+            </p>
+            <span className="inline-block mt-4 text-sm font-medium text-rose-700 group-hover:underline">
               Open →
             </span>
           </Link>

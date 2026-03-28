@@ -1,4 +1,5 @@
 import { PDFParse } from "pdf-parse";
+import { ensurePdfParseWorker } from "@/lib/pdf-parse-worker";
 import { unzipToTextCorpus } from "@/lib/zip-extract";
 
 /** Max upload size for /api/image/generate (bytes) */
@@ -63,6 +64,7 @@ function truncateCorpus(s: string): { text: string; truncated: boolean } {
 }
 
 async function extractPdf(buf: Buffer): Promise<string> {
+  ensurePdfParseWorker();
   const parser = new PDFParse({ data: buf });
   try {
     const result = await parser.getText();

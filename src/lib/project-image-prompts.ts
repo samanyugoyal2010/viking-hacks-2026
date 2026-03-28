@@ -15,3 +15,8 @@ Rules:
 export function projectImagePlannerUserMessage(corpus: string): string {
   return `Source material (may be truncated):\n\n---\n${corpus}\n---\n\nWrite the single image-generation prompt as specified.`;
 }
+
+export function fallbackImagePromptFromCorpus(corpus: string): string {
+  const excerpt = corpus.slice(0, 2000).trim() || "(no text extracted)";
+  return `Create a single clear professional infographic or system diagram on a white or light background summarizing this project. Use readable labels and simple vector-style shapes; no photorealistic people or faces; no copyrighted logos.\n\nSource excerpt:\n\n${excerpt}`;
+}

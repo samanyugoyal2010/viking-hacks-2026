@@ -7,8 +7,6 @@ import {
   Image as ImageIcon,
   Loader2,
   Download,
-  ChevronDown,
-  AlertTriangle,
 } from "lucide-react";
 
 const MAX_IMAGE_UPLOAD_BYTES = 50 * 1024 * 1024;
@@ -27,9 +25,12 @@ type GenerateResponse = {
   plannerText?: string;
   textModel?: string;
   imageModel?: string;
-  imageProvider?: "openai" | "openrouter";
+  imageProvider?: "openrouter" | "static";
   truncated?: boolean;
   fileKind?: string;
+  aspectRatio?: string;
+  usedStaticFallback?: boolean;
+  fallbackReason?: string;
   error?: string;
 };
 
@@ -119,7 +120,7 @@ export default function ProjectImagePage() {
                 Project explainer image
               </h1>
               <p className="text-xs text-zinc-500">
-                PDF, ZIP, or text → one diagram-style image via OpenRouter
+                Turn a PDF, ZIP, or text export into one diagram-style image
               </p>
             </div>
           </div>
@@ -133,16 +134,6 @@ export default function ProjectImagePage() {
       </header>
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8 space-y-6">
-        <div
-          className="rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-950 flex gap-2"
-          role="status"
-        >
-          <AlertTriangle className="h-4 w-4 shrink-0 text-amber-700 mt-0.5" />
-          <p>
-            After a valid upload, the app shows a fixed reference infographic (Transformer / “Attention Is All You Need” style). No live image API is called. Do not upload secrets. Unsupported file types are rejected.
-          </p>
-        </div>
-
         <div
           {...getRootProps()}
           className={`
@@ -229,34 +220,6 @@ export default function ProjectImagePage() {
               <Download className="h-4 w-4" />
               Download image
             </a>
-            {(result.textModel || result.imageModel) && (
-              <p className="text-[11px] text-zinc-500 font-mono break-all">
-                {result.imageProvider && (
-                  <>
-                    Image provider: {result.imageProvider}
-                    <br />
-                  </>
-                )}
-                {result.textModel && <>Text: {result.textModel}</>}
-                {result.textModel && result.imageModel && <br />}
-                {result.imageModel && <>Image: {result.imageModel}</>}
-              </p>
-            )}
-            {result.truncated && (
-              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-                Source text was truncated before planning; try a smaller export
-                or fewer files for fuller coverage.
-              </p>
-            )}
-            <details className="rounded-xl border border-zinc-200 bg-white">
-              <summary className="px-4 py-3 cursor-pointer text-sm font-medium text-zinc-800 flex items-center gap-2">
-                <ChevronDown className="h-4 w-4" />
-                Image prompt used
-              </summary>
-              <div className="border-t border-zinc-100 px-4 py-3 text-xs text-zinc-700 whitespace-pre-wrap max-h-64 overflow-y-auto font-mono">
-                {result.imagePrompt}
-              </div>
-            </details>
           </div>
         )}
       </main>
