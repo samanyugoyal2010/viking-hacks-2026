@@ -96,8 +96,8 @@ export default function MainHubPage() {
               Video generation
             </h2>
             <p className="text-sm text-zinc-600 leading-relaxed">
-              Turn research notes into a short explainer-style video preview
-              using our template clip.
+              Turn research notes into a short explainer-style video from your
+              brief.
             </p>
             <span className="inline-block mt-4 text-sm font-medium text-rose-700 group-hover:underline">
               Open →
