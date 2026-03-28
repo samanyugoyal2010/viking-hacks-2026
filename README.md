@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FuelScan
 
-## Getting Started
+Mobile-first **Next.js 16** hackathon app: snap a meal photo for **estimated** macros (via a **server-only** LLM key) and align with a simple **Mifflin–St Jeor** nutrition plan. Meal logs and profile stay in **localStorage** on the device.
 
-First, run the development server:
+## Setup
+
+```bash
+npm install
+cp .env.example .env.local
+```
+
+Set **either**:
+
+- **`OPENAI_API_KEY`** — from [OpenAI API keys](https://platform.openai.com/api-keys), or  
+- **`OPENROUTER_API_KEY`** — from [OpenRouter](https://openrouter.ai/keys) (OpenAI-compatible; default model `nvidia/nemotron-nano-12b-v2-vl:free`, override with `OPENROUTER_MODEL`).
+
+If both are set, **OpenRouter is used first**. Never commit real keys.
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). On a phone, use the same host (e.g. tunnel or LAN IP) and test **Safari** camera permissions.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy (Vercel)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Push the repo to GitHub and import the project in [Vercel](https://vercel.com/new).
+2. In **Project → Settings → Environment Variables**, add `OPENAI_API_KEY` and/or `OPENROUTER_API_KEY` (plus optional `OPENROUTER_MODEL`, `OPENROUTER_HTTP_REFERER` for Production).
+3. Deploy. The Route Handler at `/api/analyze-meal` runs on the server, so the key is not exposed to the browser.
 
-## Learn More
+## 60-second demo script
 
-To learn more about Next.js, take a look at the following resources:
+1. **Home** — “API keys live only on the server; logs stay on your phone.”
+2. **Log meal** — Take a photo → **Estimate** → show editable fields → **Save** (trust / validation).
+3. **Plan** — Enter stats → show **TDEE** and **daily target** → **Today vs plan** updates from the log.
+4. Close with the **medical disclaimer**: estimates only, not advice.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev    # development
+npm run build  # production build
+npm run start  # run production server locally
+npm run lint
+```
