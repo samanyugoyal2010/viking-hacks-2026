@@ -14,6 +14,14 @@ export type ExplainResearchMeta = {
   textFilesIncluded: number;
   totalZipEntries: number;
   includedPathsSample: string[];
+  /** Populated for empty-corpus diagnostics */
+  filesSkippedByPath?: number;
+  filesSkippedSize?: number;
+  filesSkippedBinary?: number;
+  filesSkippedExtension?: number;
+  filesSkippedOfficeParse?: number;
+  nestedZipsExpanded?: number;
+  pdfFilesInArchive?: number;
 };
 
 export type ExplainChatMessage = {

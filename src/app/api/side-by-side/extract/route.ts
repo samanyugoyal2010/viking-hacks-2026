@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PDFParse } from "pdf-parse";
+import { ensurePdfParseWorker } from "@/lib/pdf-parse-worker";
 
 const MAX_CHARS = 32_000;
 
 export async function POST(req: NextRequest) {
   try {
+    ensurePdfParseWorker();
     const form = await req.formData();
     const file = form.get("file");
     if (!file || !(file instanceof Blob)) {

@@ -99,6 +99,13 @@ export default function ExplainResearchPage() {
           textFilesIncluded: stats.textFilesIncluded,
           totalZipEntries: stats.totalZipEntries,
           includedPathsSample: stats.includedPaths.slice(0, 40),
+          filesSkippedByPath: stats.filesSkippedByPath,
+          filesSkippedSize: stats.filesSkippedSize,
+          filesSkippedBinary: stats.filesSkippedBinary,
+          filesSkippedExtension: stats.filesSkippedExtension,
+          filesSkippedOfficeParse: stats.filesSkippedOfficeParse,
+          nestedZipsExpanded: stats.nestedZipsExpanded,
+          pdfFilesInArchive: stats.pdfFilesInArchive,
         };
         setCorpus(nextCorpus);
         setMeta(nextMeta);
@@ -283,6 +290,60 @@ export default function ExplainResearchPage() {
                   <Trash2 className="h-3.5 w-3.5" />
                   Clear saved project
                 </button>
+              </div>
+            )}
+
+            {meta && meta.textFilesIncluded === 0 && meta.totalZipEntries > 0 && (
+              <div
+                className="rounded-xl border border-amber-200 bg-amber-50/90 px-3 py-3 text-sm text-amber-950 space-y-2"
+                role="status"
+              >
+                <p className="font-medium text-amber-950">
+                  No readable text was extracted from this archive.
+                </p>
+                {(meta.nestedZipsExpanded ?? 0) > 0 && (
+                  <p className="text-xs text-amber-900/90">
+                    Nested ZIPs unpacked: {meta.nestedZipsExpanded}. If you still
+                    see no text, inner files may be an unsupported type.
+                  </p>
+                )}
+                <ul className="text-xs text-amber-900/90 list-disc pl-4 space-y-0.5">
+                  <li>
+                    Skipped (path filters):{" "}
+                    {meta.filesSkippedByPath ?? "—"}
+                  </li>
+                  <li>
+                    Skipped (unsupported extension):{" "}
+                    {meta.filesSkippedExtension ?? "—"}
+                  </li>
+                  <li>
+                    Skipped (file too large):{" "}
+                    {meta.filesSkippedSize ?? "—"}
+                  </li>
+                  <li>
+                    Skipped (binary / empty decode):{" "}
+                    {meta.filesSkippedBinary ?? "—"}
+                  </li>
+                  <li>
+                    Office parse failed (.docx/.xlsx):{" "}
+                    {meta.filesSkippedOfficeParse ?? "—"}
+                  </li>
+                </ul>
+                {(meta.pdfFilesInArchive ?? 0) > 0 && (
+                  <p className="text-xs text-amber-900 pt-1 border-t border-amber-200/80">
+                    This archive includes {meta.pdfFilesInArchive} PDF
+                    {meta.pdfFilesInArchive === 1 ? "" : "s"}. PDF text is not
+                    extracted from ZIPs here. Export pages as Markdown or Word, or
+                    open a single PDF in{" "}
+                    <Link
+                      href="/side-by-side"
+                      className="font-medium text-amber-950 underline underline-offset-2"
+                    >
+                      Side-by-side PDF chat
+                    </Link>
+                    .
+                  </p>
+                )}
               </div>
             )}
 

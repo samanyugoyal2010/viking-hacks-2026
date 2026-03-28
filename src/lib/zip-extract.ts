@@ -6,6 +6,12 @@ export const MAX_CORPUS_CHARS = 180_000;
 /** Skip reading any single file larger than this (bytes) */
 const MAX_SINGLE_FILE_BYTES = 512 * 1024;
 
+/** Max nesting depth when expanding archives-in-archives (e.g. Notion export) */
+const MAX_NEST_ZIP_DEPTH = 4;
+
+/** Reject nested zip payloads larger than this to limit zip-bomb surface */
+const MAX_NESTED_ZIP_BYTES = 24 * 1024 * 1024;
+
 const SKIP_PATH_SEGMENTS = new Set([
   "node_modules",
   ".git",
@@ -93,6 +99,8 @@ const TEXT_EXTENSIONS = new Set([
   ".properties",
   ".gradle",
   ".nix",
+  ".docx",
+  ".xlsx",
 ]);
 
 export type ZipExtractStats = {
@@ -103,6 +111,9 @@ export type ZipExtractStats = {
   filesSkippedSize: number;
   filesSkippedBinary: number;
   filesSkippedExtension: number;
+  filesSkippedOfficeParse: number;
+  nestedZipsExpanded: number;
+  pdfFilesInArchive: number;
   corpusTruncated: boolean;
   corpusCharCount: number;
   includedPaths: string[];
@@ -110,6 +121,12 @@ export type ZipExtractStats = {
 
 function normalizePath(raw: string): string {
   return raw.replace(/\\/g, "/").replace(/^\/+/, "");
+}
+
+function joinZipPath(prefix: string, raw: string): string {
+  const n = normalizePath(raw);
+  if (!prefix) return n;
+  return `${prefix}/${n}`;
 }
 
 function shouldSkipPath(norm: string): boolean {
@@ -177,6 +194,126 @@ function decodeAsUtf8(buf: Uint8Array): string | null {
   }
 }
 
+function decodeXmlEntities(s: string): string {
+  return s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) =>
+      String.fromCodePoint(parseInt(h, 16))
+    )
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)));
+}
+
+function docxToPlainText(buf: Uint8Array): string | null {
+  let inner: Record<string, Uint8Array>;
+  try {
+    inner = unzipSync(buf);
+  } catch {
+    return null;
+  }
+  const docXml = inner["word/document.xml"];
+  if (!docXml?.length) return null;
+  const xml = decodeAsUtf8(docXml);
+  if (!xml) return null;
+  let t = xml.replace(/<\/w:p>/gi, "\n").replace(/<\/w:tr>/gi, "\n");
+  t = t.replace(/<[^>]+>/g, " ");
+  t = decodeXmlEntities(t);
+  return t
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function xlsxToPlainText(buf: Uint8Array): string | null {
+  let inner: Record<string, Uint8Array>;
+  try {
+    inner = unzipSync(buf);
+  } catch {
+    return null;
+  }
+  const parts: string[] = [];
+  const ss = inner["xl/sharedStrings.xml"];
+  if (ss?.length) {
+    const xml = decodeAsUtf8(ss);
+    if (xml) {
+      const re = /<t[^>]*>([^<]*)<\/t>/gi;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(xml)) !== null) {
+        const chunk = m[1].trim();
+        if (chunk) parts.push(chunk);
+      }
+    }
+  }
+  for (const key of Object.keys(inner).sort()) {
+    if (!/^xl\/worksheets\/sheet\d+\.xml$/i.test(key)) continue;
+    const sheet = inner[key];
+    if (!sheet?.length) continue;
+    const xml = decodeAsUtf8(sheet);
+    if (!xml) continue;
+    const re = /<v>([^<]+)<\/v>/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(xml)) !== null) {
+      const v = m[1].trim();
+      if (v.length > 0) parts.push(v);
+    }
+  }
+  if (parts.length === 0) return null;
+  return [...new Set(parts)].join("\n");
+}
+
+/**
+ * Unzip one archive and merge nested .zip members into a flat path→bytes map.
+ */
+function expandZipArchive(rootBytes: Uint8Array): {
+  map: Map<string, Uint8Array>;
+  nestedZipsExpanded: number;
+} {
+  type Job = { prefix: string; bytes: Uint8Array; depth: number };
+  const jobs: Job[] = [{ prefix: "", bytes: rootBytes, depth: 0 }];
+  const out = new Map<string, Uint8Array>();
+  let nestedZipsExpanded = 0;
+
+  while (jobs.length > 0) {
+    const { prefix, bytes, depth } = jobs.pop()!;
+    let entries: Record<string, Uint8Array>;
+    try {
+      entries = unzipSync(bytes);
+    } catch {
+      continue;
+    }
+    for (const [raw, data] of Object.entries(entries)) {
+      const norm = joinZipPath(prefix, raw);
+      if (!norm || norm.endsWith("/")) continue;
+
+      const canNest =
+        /\.zip$/i.test(norm) &&
+        depth < MAX_NEST_ZIP_DEPTH &&
+        data.length > 0 &&
+        data.length <= MAX_NESTED_ZIP_BYTES;
+
+      if (canNest) {
+        try {
+          unzipSync(data);
+          const dirPrefix = norm.replace(/\.zip$/i, "");
+          jobs.push({ prefix: dirPrefix, bytes: data, depth: depth + 1 });
+          nestedZipsExpanded++;
+        } catch {
+          out.set(norm, data);
+        }
+      } else {
+        out.set(norm, data);
+      }
+    }
+  }
+
+  return { map: out, nestedZipsExpanded };
+}
+
 export type ZipExtractResult = {
   corpus: string;
   stats: ZipExtractStats;
@@ -190,21 +327,7 @@ export function unzipToTextCorpus(
   zipName: string
 ): ZipExtractResult {
   const uint8 = new Uint8Array(zipArrayBuffer);
-  let files: Record<string, Uint8Array>;
-  try {
-    files = unzipSync(uint8);
-  } catch (e) {
-    throw new Error(
-      e instanceof Error ? e.message : "Could not read ZIP archive"
-    );
-  }
-
-  const pathToData = new Map<string, Uint8Array>();
-  for (const [raw, data] of Object.entries(files)) {
-    const norm = normalizePath(raw);
-    if (!norm || norm.endsWith("/")) continue;
-    pathToData.set(norm, data);
-  }
+  const { map: pathToData, nestedZipsExpanded } = expandZipArchive(uint8);
 
   const paths = [...pathToData.keys()].sort((a, b) => a.localeCompare(b));
 
@@ -216,6 +339,9 @@ export function unzipToTextCorpus(
     filesSkippedSize: 0,
     filesSkippedBinary: 0,
     filesSkippedExtension: 0,
+    filesSkippedOfficeParse: 0,
+    nestedZipsExpanded,
+    pdfFilesInArchive: 0,
     corpusTruncated: false,
     corpusCharCount: 0,
     includedPaths: [],
@@ -230,6 +356,7 @@ export function unzipToTextCorpus(
     }
     if (!isAllowedExtension(norm)) {
       stats.filesSkippedExtension++;
+      if (extensionOf(norm) === ".pdf") stats.pdfFilesInArchive++;
       continue;
     }
 
@@ -239,15 +366,32 @@ export function unzipToTextCorpus(
       stats.filesSkippedSize++;
       continue;
     }
-    if (looksBinary(buf)) {
-      stats.filesSkippedBinary++;
-      continue;
-    }
 
-    const text = decodeAsUtf8(buf);
-    if (text === null || text.trim().length === 0) {
-      stats.filesSkippedBinary++;
-      continue;
+    const ext = extensionOf(norm);
+    let text: string | null = null;
+
+    if (ext === ".docx") {
+      text = docxToPlainText(buf);
+      if (text === null || text.trim().length === 0) {
+        stats.filesSkippedOfficeParse++;
+        continue;
+      }
+    } else if (ext === ".xlsx") {
+      text = xlsxToPlainText(buf);
+      if (text === null || text.trim().length === 0) {
+        stats.filesSkippedOfficeParse++;
+        continue;
+      }
+    } else {
+      if (looksBinary(buf)) {
+        stats.filesSkippedBinary++;
+        continue;
+      }
+      text = decodeAsUtf8(buf);
+      if (text === null || text.trim().length === 0) {
+        stats.filesSkippedBinary++;
+        continue;
+      }
     }
 
     const section = `--- ${norm} ---\n${text.trim()}\n\n`;
