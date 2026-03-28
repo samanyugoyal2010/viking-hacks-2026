@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Clapperboard, Loader2, Sparkles } from "lucide-react";
+import { Clapperboard, Sparkles } from "lucide-react";
+import { CloudLoader } from "@/components/ui/cloud-loader";
 
 const VIDEO_SRC = "/editor-export.mp4";
 const GENERATE_SECONDS = 30;
@@ -93,7 +94,7 @@ export default function VideoGenerationPage() {
           >
             {phase === "working" ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <CloudLoader variant="rose" size="sm" className="shrink-0" />
                 Generating video… {secondsLeft}s
               </>
             ) : (
@@ -134,7 +135,7 @@ export default function VideoGenerationPage() {
 
         {phase === "working" && (
           <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/80 aspect-video flex flex-col items-center justify-center gap-3 text-zinc-500 text-sm">
-            <Loader2 className="h-10 w-10 animate-spin text-rose-500" />
+            <CloudLoader variant="rose" size="lg" />
             <p>Rendering your video…</p>
             <p className="text-xs tabular-nums">{secondsLeft} seconds remaining</p>
           </div>

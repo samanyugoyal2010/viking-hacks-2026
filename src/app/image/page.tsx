@@ -3,11 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useDropzone } from "react-dropzone";
-import {
-  Image as ImageIcon,
-  Loader2,
-  Download,
-} from "lucide-react";
+import { Image as ImageIcon, Download } from "lucide-react";
+import { CloudLoader } from "@/components/ui/cloud-loader";
 
 const MAX_IMAGE_UPLOAD_BYTES = 50 * 1024 * 1024;
 
@@ -180,7 +177,7 @@ export default function ProjectImagePage() {
           >
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <CloudLoader variant="emerald" size="sm" className="shrink-0" />
                 Working…
               </>
             ) : (
@@ -191,7 +188,7 @@ export default function ProjectImagePage() {
 
         {loading && (
           <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600 flex items-center gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-emerald-600 shrink-0" />
+            <CloudLoader variant="emerald" size="md" className="shrink-0" />
             <span>{PHASE_LABELS[phaseIdx] ?? PHASE_LABELS[PHASE_LABELS.length - 1]}</span>
           </div>
         )}

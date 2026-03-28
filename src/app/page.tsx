@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { WelcomeScreen } from "@/components/welcome-screen";
 
 export default function RootPage() {
-  redirect("/main");
+  return <WelcomeScreen />;
 }

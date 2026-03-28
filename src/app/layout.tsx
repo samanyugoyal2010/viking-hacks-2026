@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Side-by-side — PDF chat",
+  title: "Research workspace — magical duck",
   description:
-    "Upload a PDF, read with selectable text, and chat with an assistant (highlights, screenshots, images).",
+    "Upload PDFs, explore research exports, generate visuals, and chat with assistants tuned for your materials.",
 };
 
 export default function RootLayout({
@@ -28,7 +28,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#fafafa]">{children}</body>
+      <body className="bg-background text-foreground min-h-full flex flex-col">
+        {children}
+      </body>
     </html>
   );
 }

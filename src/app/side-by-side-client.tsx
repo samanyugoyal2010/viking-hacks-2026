@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useDropzone } from "react-dropzone";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -293,24 +294,28 @@ export default function SideBySideClient() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-zinc-200 bg-white shrink-0">
-        <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white shrink-0">
-              <MessageCircle className="h-5 w-5" />
-            </div>
+      <header className="border-border bg-card shrink-0 border-b">
+        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-3 px-4 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <Image
+              src="/mascot-light.png"
+              alt=""
+              width={40}
+              height={40}
+              className="h-9 w-auto shrink-0 object-contain"
+            />
             <div className="min-w-0">
-              <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
+              <h1 className="text-foreground text-lg font-semibold tracking-tight">
                 Side-by-side PDF chat
               </h1>
-              <p className="text-xs text-zinc-500">
+              <p className="text-muted-foreground text-xs">
                 Upload a PDF, highlight text, capture pages, attach images
               </p>
             </div>
           </div>
           <Link
             href="/main"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 shrink-0"
+            className="text-primary hover:text-primary/80 shrink-0 text-sm font-medium"
           >
             ← Home
           </Link>

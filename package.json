@@ -6,13 +6,15 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
-    "lint": "eslint"
+    "lint": "eslint",
+    "knock-mascot": "node scripts/knockout-mascot-bg.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "fflate": "^0.8.2",
+    "gsap": "^3.14.2",
     "idb-keyval": "^6.2.2",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
@@ -37,6 +39,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
