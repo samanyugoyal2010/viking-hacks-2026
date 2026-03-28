@@ -213,9 +213,7 @@ export default function Home() {
             </div>
           </div>
           <a
-            href={
-              process.env.NEXT_PUBLIC_SIDE_BY_SIDE_URL ?? "http://127.0.0.1:3001"
-            }
+            href={`${(process.env.NEXT_PUBLIC_SIDE_BY_SIDE_URL ?? "http://127.0.0.1:3001").replace(/\/$/, "")}/main`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-medium text-amber-700 hover:text-amber-900 shrink-0"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useDropzone } from "react-dropzone";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -297,18 +298,26 @@ export default function SideBySideClient() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-zinc-200 bg-white shrink-0">
-        <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white">
-            <MessageCircle className="h-5 w-5" />
+        <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white shrink-0">
+              <MessageCircle className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
+                Side-by-side PDF chat
+              </h1>
+              <p className="text-xs text-zinc-500">
+                Upload a PDF, highlight text, capture pages, attach images
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
-              Side-by-side PDF chat
-            </h1>
-            <p className="text-xs text-zinc-500">
-              Upload a PDF, highlight text, capture pages, attach images
-            </p>
-          </div>
+          <Link
+            href="/main"
+            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 shrink-0"
+          >
+            ← Home
+          </Link>
         </div>
       </header>
 

@@ -1,5 +1,5 @@
-import PdfChatShell from "./pdf-chat-shell";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return <PdfChatShell />;
+export default function RootPage() {
+  redirect("/main");
 }
