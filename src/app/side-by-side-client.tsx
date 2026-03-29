@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useDropzone } from "react-dropzone";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
@@ -18,6 +17,9 @@ import {
   X,
 } from "lucide-react";
 import { AssistantMarkdown } from "@/components/AssistantMarkdown";
+import { MagicPanel } from "@/components/research-os/magic-panel";
+import { ResearchOsSubpageShell } from "@/components/research-os/research-os-subpage-shell";
+import { ACCENT_THEMES } from "@/components/research-os/research-os-theme";
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -290,90 +292,80 @@ export default function SideBySideClient() {
   }, [pendingImages, input, history, documentContext]);
 
   const docKey = useMemo(() => pdfUrl ?? "none", [pdfUrl]);
+  const theme = ACCENT_THEMES.sky;
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b border-zinc-200 bg-white shrink-0">
-        <div className="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white shrink-0">
-              <MessageCircle className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
-                Side-by-side PDF chat
-              </h1>
-              <p className="text-xs text-zinc-500">
-                Upload a PDF, highlight text, capture pages, attach images
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/main"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 shrink-0"
-          >
-            ← Home
-          </Link>
-        </div>
-      </header>
-
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 max-w-[1600px] mx-auto w-full">
+    <ResearchOsSubpageShell
+      accent="sky"
+      title="Side-by-side PDF chat"
+      subtitle="Upload a PDF, highlight text, capture pages, attach images"
+      icon={MessageCircle}
+    >
+      <div className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col lg:flex-row">
         {/* PDF column */}
         <div
           ref={shellRef}
-          className="flex-1 flex flex-col border-b lg:border-b-0 lg:border-r border-zinc-200 min-h-[50vh] lg:min-h-0"
+          className="flex min-h-[50vh] flex-1 flex-col border-b border-white/10 lg:min-h-0 lg:border-r lg:border-b-0"
         >
           {!file ? (
-            <div
-              {...getRootProps()}
-              className={`
-                m-4 flex-1 rounded-2xl border-2 border-dashed p-10 flex flex-col items-center justify-center cursor-pointer
-                transition-colors
-                ${isDragActive ? "border-sky-400 bg-sky-50" : "border-zinc-300 bg-white hover:border-sky-300"}
-              `}
-            >
-              <input {...getInputProps()} />
-              <Upload className="h-10 w-10 text-zinc-400 mb-3" />
-              <p className="text-sm font-medium text-zinc-700">
-                Drop a PDF here or click to browse
-              </p>
-              <p className="text-xs text-zinc-400 mt-1">Max 30 MB</p>
+            <div className="m-4 flex-1">
+              <MagicPanel
+                gradient={theme.gradient}
+                accent={theme.accentHex}
+                innerClassName="p-0 overflow-hidden"
+              >
+                <div
+                  {...getRootProps()}
+                  className={`flex min-h-[280px] cursor-pointer flex-col items-center justify-center rounded-[0.65rem] border-2 border-dashed p-10 transition-colors ${
+                    isDragActive
+                      ? theme.dropzoneActive
+                      : `${theme.dropzoneIdle} border-white/25`
+                  }`}
+                >
+                  <input {...getInputProps()} />
+                  <Upload className="mb-3 h-10 w-10 text-zinc-500" />
+                  <p className="text-sm font-medium text-zinc-200">
+                    Drop a PDF here or click to browse
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">Max 30 MB</p>
+                </div>
+              </MagicPanel>
             </div>
           ) : (
             <>
-              <div className="flex items-center gap-2 px-3 py-2 border-b border-zinc-100 bg-zinc-50/80 flex-wrap">
+              <div className="flex flex-wrap items-center gap-2 border-b border-white/10 bg-black/45 px-3 py-2 backdrop-blur-md">
                 <button
                   type="button"
                   {...getRootProps({ className: "inline-flex" })}
-                  className="text-xs font-medium text-sky-700 hover:underline px-2 py-1"
+                  className={`px-2 py-1 text-xs font-medium ${theme.subtleLink}`}
                 >
                   <input {...getInputProps()} />
                   Replace PDF
                 </button>
-                <span className="text-xs text-zinc-500 truncate max-w-[200px]">
+                <span className="max-w-[200px] truncate text-xs text-zinc-500">
                   {file.name}
                 </span>
                 {extracting && (
-                  <span className="text-xs text-zinc-500 flex items-center gap-1">
+                  <span className="flex items-center gap-1 text-xs text-zinc-400">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     Extracting text…
                   </span>
                 )}
                 {extractError && (
-                  <span className="text-xs text-red-600">{extractError}</span>
+                  <span className="text-xs text-red-400">{extractError}</span>
                 )}
               </div>
-              <div className="flex items-center justify-center gap-2 py-2 px-3 bg-white border-b border-zinc-100 flex-wrap">
+              <div className="flex flex-wrap items-center justify-center gap-2 border-b border-white/10 bg-black/35 px-3 py-2 backdrop-blur-sm">
                 <button
                   type="button"
                   disabled={pageNumber <= 1}
                   onClick={() => setPageNumber((p) => Math.max(1, p - 1))}
-                  className="p-2 rounded-lg border border-zinc-200 disabled:opacity-40 hover:bg-zinc-50"
+                  className="rounded-lg border border-white/15 bg-white/5 p-2 text-zinc-200 hover:bg-white/10 disabled:opacity-40"
                   aria-label="Previous page"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="text-sm text-zinc-600 tabular-nums min-w-[100px] text-center">
+                <span className="min-w-[100px] text-center text-sm tabular-nums text-zinc-300">
                   Page {pageNumber}
                   {numPages ? ` / ${numPages}` : ""}
                 </span>
@@ -385,7 +377,7 @@ export default function SideBySideClient() {
                       numPages ? Math.min(numPages, p + 1) : p + 1
                     )
                   }
-                  className="p-2 rounded-lg border border-zinc-200 disabled:opacity-40 hover:bg-zinc-50"
+                  className="rounded-lg border border-white/15 bg-white/5 p-2 text-zinc-200 hover:bg-white/10 disabled:opacity-40"
                   aria-label="Next page"
                 >
                   <ChevronRight className="h-4 w-4" />
@@ -393,7 +385,7 @@ export default function SideBySideClient() {
                 <button
                   type="button"
                   onClick={() => void addScreenshot()}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-white/10"
                 >
                   <Camera className="h-3.5 w-3.5" />
                   Screenshot page
@@ -401,7 +393,7 @@ export default function SideBySideClient() {
                 <button
                   type="button"
                   onClick={() => imgInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg border border-zinc-200 bg-white hover:bg-zinc-50"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-white/10"
                 >
                   <ImagePlus className="h-3.5 w-3.5" />
                   Attach image
@@ -416,7 +408,7 @@ export default function SideBySideClient() {
               </div>
               <div
                 ref={viewerRef}
-                className="flex-1 overflow-auto p-4 bg-zinc-100 relative"
+                className="relative flex-1 overflow-auto bg-black/30 p-4"
                 onMouseUp={onMouseUp}
               >
                 <div className="mx-auto shadow-lg rounded bg-white w-fit max-w-full">
@@ -428,12 +420,12 @@ export default function SideBySideClient() {
                       setPageNumber(1);
                     }}
                     loading={
-                      <div className="p-12 flex justify-center text-zinc-500 text-sm">
+                      <div className="flex justify-center p-12 text-sm text-zinc-400">
                         <Loader2 className="h-6 w-6 animate-spin" />
                       </div>
                     }
                     error={
-                      <div className="p-8 text-red-600 text-sm">
+                      <div className="p-8 text-sm text-red-400">
                         Failed to load PDF.
                       </div>
                     }
@@ -458,7 +450,7 @@ export default function SideBySideClient() {
                     <button
                       type="button"
                       onClick={askChatFromSelection}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 text-white text-xs font-medium px-3 py-2 shadow-lg hover:bg-sky-700"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-sky-400/40 bg-sky-600 px-3 py-2 text-xs font-medium text-white shadow-lg shadow-sky-950/50 hover:bg-sky-500"
                     >
                       <MessageCircle className="h-3.5 w-3.5" />
                       Ask chat
@@ -471,11 +463,11 @@ export default function SideBySideClient() {
         </div>
 
         {/* Chat column */}
-        <div className="w-full lg:w-[min(440px,100%)] flex flex-col bg-white min-h-[40vh] lg:min-h-0 lg:max-h-[calc(100vh-57px)]">
-          <div className="px-4 py-2 border-b border-zinc-100">
-            <div className="text-sm font-medium text-zinc-800">Assistant</div>
+        <div className="flex min-h-[40vh] w-full flex-col border-t border-white/10 bg-black/45 backdrop-blur-xl lg:max-h-[calc(100vh-57px)] lg:min-h-0 lg:w-[min(440px,100%)] lg:border-t-0 lg:border-l">
+          <div className="border-b border-white/10 px-4 py-2">
+            <div className="text-sm font-medium text-zinc-200">Assistant</div>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">
             {history.length === 0 && (
               <p className="text-sm text-zinc-500">
                 Ask questions about the PDF. Highlight text and click &quot;Ask
@@ -491,8 +483,8 @@ export default function SideBySideClient() {
                 <div
                   className={`max-w-[95%] rounded-2xl px-3 py-2 text-sm ${
                     turn.role === "user"
-                      ? "bg-sky-600 text-white"
-                      : "bg-zinc-100 text-zinc-800"
+                      ? theme.userBubble
+                      : "border border-white/10 bg-zinc-950/85 text-zinc-100"
                   }`}
                 >
                   {turn.role === "user" &&
@@ -516,14 +508,14 @@ export default function SideBySideClient() {
                     <p className="whitespace-pre-wrap">{turn.content}</p>
                   )}
                   {turn.role === "assistant" && (
-                    <AssistantMarkdown content={turn.content} />
+                    <AssistantMarkdown content={turn.content} variant="dark" />
                   )}
                 </div>
               </div>
             ))}
             {chatLoading && (
               <div className="flex justify-start">
-                <div className="bg-zinc-100 rounded-2xl px-3 py-2 text-sm text-zinc-500 flex items-center gap-2">
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-400">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Thinking…
                 </div>
@@ -531,26 +523,26 @@ export default function SideBySideClient() {
             )}
           </div>
           {chatError && (
-            <div className="px-4 py-2 text-xs text-red-600 border-t border-red-100 bg-red-50">
+            <div className="border-t border-red-500/30 bg-red-950/40 px-4 py-2 text-xs text-red-300">
               {chatError}
             </div>
           )}
           {pendingImages.length > 0 && (
-            <div className="px-4 py-2 border-t border-zinc-100 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 border-t border-white/10 px-4 py-2">
               {pendingImages.map((url, i) => (
                 <div key={i} className="relative group">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={url}
                     alt=""
-                    className="h-16 w-auto rounded border border-zinc-200"
+                    className="h-16 w-auto rounded border border-white/15"
                   />
                   <button
                     type="button"
                     onClick={() =>
                       setPendingImages((p) => p.filter((_, j) => j !== i))
                     }
-                    className="absolute -top-1 -right-1 bg-zinc-800 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100"
+                    className="absolute -top-1 -right-1 rounded-full bg-zinc-900 p-0.5 text-white opacity-0 ring-1 ring-white/20 group-hover:opacity-100"
                     aria-label="Remove image"
                   >
                     <X className="h-3 w-3" />
@@ -559,7 +551,7 @@ export default function SideBySideClient() {
               ))}
             </div>
           )}
-          <div className="p-3 border-t border-zinc-100 flex gap-2">
+          <div className="flex gap-2 border-t border-white/10 p-3">
             <textarea
               ref={composerRef}
               value={input}
@@ -572,14 +564,14 @@ export default function SideBySideClient() {
               }}
               placeholder="Message… (Enter to send, Shift+Enter newline)"
               rows={3}
-              className="flex-1 resize-none rounded-xl border border-zinc-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+              className={`flex-1 resize-none rounded-xl border border-white/15 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 ${theme.focusRing}`}
               disabled={chatLoading}
             />
             <button
               type="button"
               onClick={() => void sendMessage()}
               disabled={chatLoading}
-              className="self-end p-3 rounded-xl bg-sky-600 text-white hover:bg-sky-700 disabled:opacity-50"
+              className="self-end rounded-xl border border-sky-400/35 bg-sky-600 p-3 text-white hover:bg-sky-500 disabled:opacity-50"
               aria-label="Send"
             >
               <Send className="h-5 w-5" />
@@ -587,6 +579,6 @@ export default function SideBySideClient() {
           </div>
         </div>
       </div>
-    </div>
+    </ResearchOsSubpageShell>
   );
 }

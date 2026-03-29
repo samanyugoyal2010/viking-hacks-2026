@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Side-by-side — PDF chat",
+  title: "ResearchOS",
   description:
-    "Upload a PDF, read with selectable text, and chat with an assistant (highlights, screenshots, images).",
+    "Research workspace: PDF chat, research ZIP explainers, diagram images, and video briefs.",
 };
 
 export default function RootLayout({

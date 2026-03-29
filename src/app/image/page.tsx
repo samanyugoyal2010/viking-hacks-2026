@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
 import { useDropzone } from "react-dropzone";
 import {
   Image as ImageIcon,
   Loader2,
   Download,
 } from "lucide-react";
+import { MagicPanel } from "@/components/research-os/magic-panel";
+import { ResearchOsSubpageShell } from "@/components/research-os/research-os-subpage-shell";
+import { ACCENT_THEMES } from "@/components/research-os/research-os-theme";
 
 const MAX_IMAGE_UPLOAD_BYTES = 50 * 1024 * 1024;
 
@@ -107,115 +109,125 @@ export default function ProjectImagePage() {
     }
   }, [file, aspectRatio]);
 
+  const theme = ACCENT_THEMES.emerald;
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#fafafa]">
-      <header className="border-b border-zinc-200 bg-white shrink-0">
-        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shrink-0">
-              <ImageIcon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
-                Project explainer image
-              </h1>
-              <p className="text-xs text-zinc-500">
-                Turn a PDF, ZIP, or text export into one diagram-style image
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/main"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 shrink-0"
-          >
-            ← Home
-          </Link>
-        </div>
-      </header>
-
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8 space-y-6">
-        <div
-          {...getRootProps()}
-          className={`
-            rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition-colors
-            ${isDragActive ? "border-emerald-400 bg-emerald-50" : "border-zinc-300 bg-white hover:border-emerald-300"}
-          `}
+    <ResearchOsSubpageShell
+      accent="emerald"
+      title="Project explainer image"
+      subtitle="Turn a PDF, ZIP, or text export into one diagram-style image"
+      icon={ImageIcon}
+      headerClassName="mx-auto w-full max-w-3xl"
+      mainClassName="mx-auto w-full max-w-3xl flex-1 px-4 py-8"
+    >
+      <main className="space-y-6">
+        <MagicPanel
+          gradient={theme.gradient}
+          accent={theme.accentHex}
+          innerClassName="p-0 overflow-hidden"
         >
-          <input {...getInputProps()} />
-          <ImageIcon className="h-10 w-10 text-zinc-400 mx-auto mb-3" />
-          <p className="text-sm font-medium text-zinc-700">
-            Drop PDF, ZIP, .txt, .md, .csv, or .json
-          </p>
-          <p className="text-xs text-zinc-400 mt-1">
-            Max {MAX_IMAGE_UPLOAD_BYTES / (1024 * 1024)} MB
-          </p>
-          {file && (
-            <p className="text-xs text-emerald-700 mt-3 font-medium truncate max-w-full px-2">
-              {file.name}
-            </p>
-          )}
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
-          <label className="flex-1 text-sm">
-            <span className="block text-zinc-600 mb-1">Aspect ratio</span>
-            <select
-              value={aspectRatio}
-              onChange={(e) => setAspectRatio(e.target.value)}
-              disabled={loading}
-              className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm bg-white"
-            >
-              {ASPECT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            onClick={() => void generate()}
-            disabled={!file || loading}
-            className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+          <div
+            {...getRootProps()}
+            className={`cursor-pointer p-8 text-center transition-colors ${
+              isDragActive
+                ? theme.dropzoneActive
+                : `${theme.dropzoneIdle} border-2 border-dashed border-white/25`
+            } rounded-[0.65rem]`}
           >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Working…
-              </>
-            ) : (
-              "Generate image"
+            <input {...getInputProps()} />
+            <ImageIcon className="mx-auto mb-3 h-10 w-10 text-zinc-500" />
+            <p className="text-sm font-medium text-zinc-200">
+              Drop PDF, ZIP, .txt, .md, .csv, or .json
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Max {MAX_IMAGE_UPLOAD_BYTES / (1024 * 1024)} MB
+            </p>
+            {file && (
+              <p className="mt-3 max-w-full truncate px-2 text-xs font-medium text-emerald-400">
+                {file.name}
+              </p>
             )}
-          </button>
-        </div>
+          </div>
+        </MagicPanel>
+
+        <MagicPanel
+          gradient={theme.gradient}
+          accent={theme.accentHex}
+          innerClassName="p-4"
+        >
+          <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-end">
+            <label className="flex-1 text-sm text-zinc-400">
+              <span className="mb-1 block">Aspect ratio</span>
+              <select
+                value={aspectRatio}
+                onChange={(e) => setAspectRatio(e.target.value)}
+                disabled={loading}
+                className="w-full rounded-xl border border-white/15 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100"
+              >
+                {ASPECT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => void generate()}
+              disabled={!file || loading}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-400/35 px-6 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50 ${theme.primaryBtn}`}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Working…
+                </>
+              ) : (
+                "Generate image"
+              )}
+            </button>
+          </div>
+        </MagicPanel>
 
         {loading && (
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600 flex items-center gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-emerald-600 shrink-0" />
-            <span>{PHASE_LABELS[phaseIdx] ?? PHASE_LABELS[PHASE_LABELS.length - 1]}</span>
-          </div>
+          <MagicPanel
+            gradient={theme.gradient}
+            accent={theme.accentHex}
+            innerClassName="p-4"
+          >
+            <div className="flex items-center gap-3 text-sm text-zinc-300">
+              <Loader2 className="h-5 w-5 shrink-0 animate-spin text-emerald-400" />
+              <span>
+                {PHASE_LABELS[phaseIdx] ?? PHASE_LABELS[PHASE_LABELS.length - 1]}
+              </span>
+            </div>
+          </MagicPanel>
         )}
 
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <div className="rounded-xl border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm text-red-200">
             {error}
           </div>
         )}
 
         {result?.imageUrl && (
           <div className="space-y-4">
-            <div className="rounded-2xl border border-zinc-200 bg-white p-4 overflow-hidden">
+            <MagicPanel
+              gradient={theme.gradient}
+              accent={theme.accentHex}
+              innerClassName="overflow-hidden p-4"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={result.imageUrl}
                 alt="Generated project diagram"
-                className="w-full h-auto rounded-lg"
+                className="h-auto w-full rounded-lg"
               />
-            </div>
+            </MagicPanel>
             <a
               href={result.imageUrl}
               download={`project-diagram-${Date.now()}.png`}
-              className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700 hover:underline"
+              className={`inline-flex items-center gap-2 text-sm font-medium ${theme.subtleLink}`}
             >
               <Download className="h-4 w-4" />
               Download image
@@ -223,6 +235,6 @@ export default function ProjectImagePage() {
           </div>
         )}
       </main>
-    </div>
+    </ResearchOsSubpageShell>
   );
 }

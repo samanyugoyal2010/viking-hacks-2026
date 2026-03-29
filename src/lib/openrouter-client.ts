@@ -58,16 +58,27 @@ export function hasOpenRouterKeysForImage(): boolean {
   );
 }
 
+/** Site URL for OpenRouter attribution; works on Vercel without hardcoding localhost. */
+function defaultOpenRouterHttpReferer(): string {
+  const explicit = process.env.OPENROUTER_HTTP_REFERER?.trim();
+  if (explicit) return explicit;
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (site) return site.replace(/\/$/, "");
+  const vercel = process.env.VERCEL_URL?.trim();
+  if (vercel) {
+    const host = vercel.replace(/^https?:\/\//i, "");
+    return `https://${host}`;
+  }
+  return "http://127.0.0.1:3001";
+}
+
 export function openRouterHeaders(apiKeyOverride?: string): Record<string, string> {
   const key = apiKeyOverride ?? getOpenRouterApiKey();
   const headers: Record<string, string> = {
     Authorization: `Bearer ${key}`,
     "Content-Type": "application/json",
   };
-  const referer =
-    process.env.OPENROUTER_HTTP_REFERER?.trim() ||
-    "http://127.0.0.1:3001";
-  headers["HTTP-Referer"] = referer;
+  headers["HTTP-Referer"] = defaultOpenRouterHttpReferer();
 
   const title =
     process.env.OPENROUTER_APP_TITLE?.trim() || "Side-by-side PDF Chat";

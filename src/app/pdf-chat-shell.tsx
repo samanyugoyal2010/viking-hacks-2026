@@ -1,15 +1,17 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { PrismGradientBg } from "@/components/research-os/prism-gradient-bg";
 
 const SideBySideClient = dynamic(
   () => import("./side-by-side-client"),
   {
     ssr: false,
     loading: () => (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-2 bg-[#fafafa] text-zinc-500 text-sm">
-        <span className="inline-block h-6 w-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
-        Loading PDF viewer…
+      <div className="relative flex min-h-screen flex-col items-center justify-center gap-3 bg-[#030303] text-sm text-zinc-400">
+        <PrismGradientBg />
+        <span className="relative z-10 inline-block h-7 w-7 animate-spin rounded-full border-2 border-sky-400/60 border-t-transparent" />
+        <span className="relative z-10">Loading PDF viewer…</span>
       </div>
     ),
   }

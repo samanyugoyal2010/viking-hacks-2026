@@ -1,0 +1,42 @@
+.panel {
+  --background: linear-gradient(to left, #38bdf8 0%, #06b6d4 100%);
+  --accent: #7dd3fc;
+  width: 100%;
+  padding: 5px;
+  border-radius: 1rem;
+  overflow: visible;
+  background: var(--background);
+  position: relative;
+  z-index: 0;
+}
+
+.panel::after {
+  position: absolute;
+  content: "";
+  top: 24px;
+  left: 0;
+  right: 0;
+  z-index: -1;
+  height: 100%;
+  width: 100%;
+  transform: scale(0.82);
+  filter: blur(22px);
+  background: var(--background);
+  transition: opacity 0.45s;
+  border-radius: 1rem;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.panel:hover::after {
+  opacity: 0;
+}
+
+.inner {
+  background: #0e0e10;
+  color: #d4d4d8;
+  width: 100%;
+  min-height: 0;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}

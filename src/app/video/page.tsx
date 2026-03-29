@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Clapperboard, Loader2, Sparkles } from "lucide-react";
+import { MagicPanel } from "@/components/research-os/magic-panel";
+import { ResearchOsSubpageShell } from "@/components/research-os/research-os-subpage-shell";
+import { ACCENT_THEMES } from "@/components/research-os/research-os-theme";
 
 const VIDEO_SRC = "/editor-export.mp4";
 const GENERATE_SECONDS = 30;
@@ -46,35 +48,24 @@ export default function VideoGenerationPage() {
     intervalRef.current = id;
   }, []);
 
-  return (
-    <div className="min-h-screen flex flex-col bg-[#fafafa]">
-      <header className="border-b border-zinc-200 bg-white shrink-0">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-rose-500 to-orange-600 flex items-center justify-center text-white shrink-0">
-              <Clapperboard className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
-                Video generation
-              </h1>
-              <p className="text-xs text-zinc-500">
-                Create a short research explainer video
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/main"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 shrink-0"
-          >
-            ← Home
-          </Link>
-        </div>
-      </header>
+  const theme = ACCENT_THEMES.rose;
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8 space-y-8">
-        <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm space-y-4">
-          <label className="block text-sm text-zinc-600">
+  return (
+    <ResearchOsSubpageShell
+      accent="rose"
+      title="Video generation"
+      subtitle="Create a short research explainer video"
+      icon={Clapperboard}
+      headerClassName="mx-auto w-full max-w-4xl"
+      mainClassName="mx-auto w-full max-w-4xl flex-1 px-4 py-8"
+    >
+      <main className="space-y-8">
+        <MagicPanel
+          gradient={theme.gradient}
+          accent={theme.accentHex}
+          innerClassName="space-y-4 p-6"
+        >
+          <label className="block text-sm text-zinc-400">
             What should the video cover?
             <textarea
               value={brief}
@@ -82,14 +73,14 @@ export default function VideoGenerationPage() {
               rows={3}
               placeholder="Describe your research topic, audience, or key points…"
               disabled={phase === "working"}
-              className="mt-1.5 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-rose-500/25 disabled:bg-zinc-50 disabled:text-zinc-500"
+              className={`mt-1.5 w-full resize-y rounded-xl border border-white/15 bg-zinc-950/80 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 disabled:opacity-60 ${theme.focusRing}`}
             />
           </label>
           <button
             type="button"
             onClick={() => void runGenerate()}
             disabled={phase === "working"}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-orange-600 text-white text-sm font-medium hover:from-rose-700 hover:to-orange-700 disabled:opacity-60"
+            className={`inline-flex items-center gap-2 rounded-xl border border-rose-400/35 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60 ${theme.primaryBtn}`}
           >
             {phase === "working" ? (
               <>
@@ -104,13 +95,17 @@ export default function VideoGenerationPage() {
             )}
           </button>
           {phase === "ready" && (
-            <p className="text-sm text-emerald-700">Your video is ready.</p>
+            <p className="text-sm text-emerald-400">Your video is ready.</p>
           )}
-        </div>
+        </MagicPanel>
 
         {phase === "ready" && (
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-950 overflow-hidden shadow-lg ring-1 ring-black/5">
-            <div className="px-4 py-2 border-b border-zinc-800 flex items-center justify-end gap-2">
+          <MagicPanel
+            gradient={theme.gradient}
+            accent={theme.accentHex}
+            innerClassName="overflow-hidden p-0"
+          >
+            <div className="flex items-center justify-end gap-2 border-b border-white/10 px-4 py-2">
               <a
                 href={VIDEO_SRC}
                 download="research-explainer.mp4"
@@ -121,7 +116,7 @@ export default function VideoGenerationPage() {
             </div>
             <video
               ref={videoRef}
-              className="w-full aspect-video bg-black object-contain"
+              className="aspect-video w-full bg-black object-contain"
               controls
               playsInline
               preload="auto"
@@ -129,17 +124,25 @@ export default function VideoGenerationPage() {
               <source src={VIDEO_SRC} type="video/mp4" />
               Your browser does not support embedded video.
             </video>
-          </div>
+          </MagicPanel>
         )}
 
         {phase === "working" && (
-          <div className="rounded-2xl border border-dashed border-zinc-300 bg-zinc-50/80 aspect-video flex flex-col items-center justify-center gap-3 text-zinc-500 text-sm">
-            <Loader2 className="h-10 w-10 animate-spin text-rose-500" />
-            <p>Rendering your video…</p>
-            <p className="text-xs tabular-nums">{secondsLeft} seconds remaining</p>
-          </div>
+          <MagicPanel
+            gradient={theme.gradient}
+            accent={theme.accentHex}
+            innerClassName="p-0 overflow-hidden"
+          >
+            <div className="flex aspect-video flex-col items-center justify-center gap-3 border-2 border-dashed border-white/20 bg-black/35 p-6 text-sm text-zinc-400">
+              <Loader2 className="h-10 w-10 animate-spin text-rose-400" />
+              <p>Rendering your video…</p>
+              <p className="tabular-nums text-xs text-zinc-500">
+                {secondsLeft} seconds remaining
+              </p>
+            </div>
+          </MagicPanel>
         )}
       </main>
-    </div>
+    </ResearchOsSubpageShell>
   );
 }
